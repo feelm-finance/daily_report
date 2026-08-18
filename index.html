@@ -279,6 +279,8 @@
     .bar-card{height:auto;padding:14px 16px;}
     .acct-bal-table{font-size:10.5px;}
     .acct-bal-table th,.acct-bal-table td{padding:5px 4px;}
+    .acct-toggle-btn{padding:11px 0;font-size:11.5px;}
+    .acct-toggle-arrow{font-size:10px;}
     .detail-col{padding:12px 12px 14px;}
     table{font-size:11px;}
     th,td{padding:7px 6px;}
@@ -429,6 +431,7 @@ function selectDate(d){
   grid.innerHTML = '';
   const prevBal = prevBalance(d);
   const cardMap = {};
+  const isMobile = window.matchMedia('(max-width:600px)').matches;
   companies.forEach((name, i) => {
     const cin = rec['입금'].vals[i];
     const cout = rec['지출'].vals[i];
@@ -479,8 +482,8 @@ function selectDate(d){
       </div>
       <div class="flow-row"><span>입금 <b class="v-in">${fmtShort(cin)}</b></span><span>지출 <b class="v-out">${fmtShort(cout)}</b></span></div>
       <div class="flow-bar"><div class="seg-in" style="width:${inPct}%"></div><div class="seg-out" style="width:${outPct}%"></div></div>
-      <button type="button" class="acct-head acct-toggle-btn"><span class="acct-toggle-arrow">▾</span> 계좌별 상세내역</button>
-      <div class="acct-detail" style="display:block;">${acctHtml}</div>
+      <button type="button" class="acct-head acct-toggle-btn"><span class="acct-toggle-arrow">${isMobile?'▸':'▾'}</span> 계좌별 상세내역</button>
+      <div class="acct-detail" style="display:${isMobile?'none':'block'};">${acctHtml}</div>
     `;
 
     const toggleBtn = card.querySelector('.acct-toggle-btn');

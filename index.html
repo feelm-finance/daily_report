@@ -256,16 +256,13 @@
     .company-card{padding:14px 16px;}
     .cc-header{gap:8px;}
     .company-pair-row{gap:10px;}
-    #companyGrid{gap:10px;}
-    #companyGrid .company-pair-row{
-      flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
-      scroll-snap-type:x proximity;margin:0 -10px;padding:2px 10px 10px;
-      scrollbar-width:thin;
+    #companyGrid{
+      display:flex;flex-direction:column;flex-wrap:nowrap;gap:10px;
+      overflow:visible;margin:0;padding:0;
     }
-    #companyGrid .company-pair-row::-webkit-scrollbar{height:5px;}
-    #companyGrid .company-pair-row::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-    #companyGrid .company-card{flex:0 0 100%;scroll-snap-align:start;}
-    #companyGrid .company-pair-row-solo .company-card{flex:0 0 100% !important;}
+    #companyGrid .company-pair-row{display:contents;}
+    #companyGrid .company-card{flex:0 0 auto;width:100%;}
+    #companyGrid .company-pair-row-solo .company-card{width:100% !important;}
     .pie-col,.bar-col{flex:1 1 100%;}
     .pie-card{height:auto;padding:14px 16px;gap:4px;}
     #pieChart{width:120px;height:120px;}
@@ -277,8 +274,15 @@
     .pie-legend-name{font-size:10.5px;}
     .pie-legend-val{font-size:9.5px;}
     .bar-card{height:auto;padding:14px 16px;}
-    .acct-bal-table{font-size:10.5px;}
-    .acct-bal-table th,.acct-bal-table td{padding:5px 4px;}
+    .acct-bal-table{font-size:9.5px;min-width:320px;}
+    .acct-bal-table th:nth-child(1),.acct-bal-table td:nth-child(1){width:29.5%;}
+    .acct-bal-table th:nth-child(2),.acct-bal-table td:nth-child(2){width:18%;}
+    .acct-bal-table th:nth-child(3),.acct-bal-table td:nth-child(3){width:19.5%;}
+    .acct-bal-table th:nth-child(4),.acct-bal-table td:nth-child(4){width:19.5%;}
+    .acct-bal-table th:nth-child(5),.acct-bal-table td:nth-child(5){width:13.5%;}
+    .acct-bal-table th{font-size:9px;padding:5px 3px;white-space:nowrap;}
+    .acct-bal-table td{padding:5px 3px;}
+    .acct-bal-table td.acct-bal-number{font-size:9.5px;}
     .acct-toggle-btn{padding:11px 0;font-size:11.5px;}
     .acct-toggle-arrow{font-size:10px;}
     .detail-col{padding:12px 12px 14px;}
@@ -431,7 +435,6 @@ function selectDate(d){
   grid.innerHTML = '';
   const prevBal = prevBalance(d);
   const cardMap = {};
-  const isMobile = window.matchMedia('(max-width:600px)').matches;
   companies.forEach((name, i) => {
     const cin = rec['입금'].vals[i];
     const cout = rec['지출'].vals[i];
@@ -482,8 +485,8 @@ function selectDate(d){
       </div>
       <div class="flow-row"><span>입금 <b class="v-in">${fmtShort(cin)}</b></span><span>지출 <b class="v-out">${fmtShort(cout)}</b></span></div>
       <div class="flow-bar"><div class="seg-in" style="width:${inPct}%"></div><div class="seg-out" style="width:${outPct}%"></div></div>
-      <button type="button" class="acct-head acct-toggle-btn"><span class="acct-toggle-arrow">${isMobile?'▸':'▾'}</span> 계좌별 상세내역</button>
-      <div class="acct-detail" style="display:${isMobile?'none':'block'};">${acctHtml}</div>
+      <button type="button" class="acct-head acct-toggle-btn"><span class="acct-toggle-arrow">▾</span> 계좌별 상세내역</button>
+      <div class="acct-detail" style="display:block;">${acctHtml}</div>
     `;
 
     const toggleBtn = card.querySelector('.acct-toggle-btn');

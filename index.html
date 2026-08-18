@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자금일보 대시보드 (8/1~8/14)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#faf9f6;
+    --card:#ffffff;
+    --border:#eae6db;
+    --ink:#1f2420;
+    --sub:#7b7568;
+    --gold:#b9902f;
+    --gold-soft:#f7edd7;
+    --gold-deep:#8a6a1f;
+    --chart:#b9902f;
+    --chart-soft:#f7edd7;
+    --green:#3d6b52;
+    --green-soft:#e6efe9;
+    --red:#a15c3f;
+    --red-soft:#f3ebe4;
+    --shadow: 0 2px 10px rgba(30,25,10,0.05), 0 1px 2px rgba(30,25,10,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Pretendard','Space Grotesk',-apple-system,sans-serif;
+    color:var(--ink);
+    padding:32px 16px 60px;
+  }
+  .wrap{max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:22px;}
+
+  .header{
+    display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;margin-bottom:6px;
+  }
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:var(--gold-deep);font-weight:600;
+  }
+  .title{font-size:26px;font-weight:700;letter-spacing:-.01em;}
+  .subtitle{font-size:13.5px;color:var(--sub);}
+
+  /* baseline strip */
+  .baseline{
+    background:linear-gradient(135deg,#1f2420 0%, #33362f 100%);
+    border-radius:16px;padding:18px 22px;color:#f4f1e9;
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px 26px;
+    box-shadow:var(--shadow);
+  }
+  .baseline .tag{
+    font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);background:rgba(185,144,47,0.18);border:1px solid rgba(185,144,47,0.35);
+    padding:4px 10px;border-radius:20px;
+  }
+  .baseline .amt{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:20px;}
+  .baseline .amt-sub{font-size:12px;color:#c7c2b3;}
+
+  /* date tabs */
+  .tabs{
+    display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;
+    scrollbar-width:thin;
+  }
+  .tab{
+    flex:0 0 auto;padding:9px 15px;border-radius:11px;border:1px solid var(--border);
+    background:var(--card);font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;
+    transition:all .15s ease;white-space:nowrap;
+  }
+  .tab:hover{border-color:var(--gold);color:var(--gold-deep);}
+  .tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab .dow{font-weight:400;font-size:11px;opacity:.65;margin-left:3px;}
+
+  /* KPI strip */
+  .kpi-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+  }
+  .kpi{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px;box-shadow:var(--shadow);
+  }
+  .kpi .label{font-size:12px;color:var(--sub);margin-bottom:8px;font-weight:500;}
+  .kpi .value{font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;}
+  .kpi.in .value{color:var(--green);}
+  .kpi.out .value{color:var(--red);}
+  .kpi.net .value.pos{color:var(--green);}
+  .kpi.net .value.neg{color:var(--red);}
+  .kpi.bal .value{color:var(--ink);}
+
+  /* company cards */
+  .section-title{
+    font-size:14px;font-weight:700;color:var(--ink);margin:4px 0 -4px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-title::before{
+    content:'';width:4px;height:14px;background:var(--gold);border-radius:2px;
+  }
+  .company-grid{
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .company-pair-row{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;}
+  .company-pair-row-solo{justify-content:flex-start;}
+  .company-pair-row-solo .company-card{flex:0 1 calc(50% - 7px);}
+  .company-card-empty{background:transparent;border:1px dashed var(--border);box-shadow:none;}
+  .company-pair-row .company-card{flex:1 1 320px;min-width:0;}
+  .company-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:10px;
+  }
+  .cc-header{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .company-card .cname{font-size:14.5px;font-weight:700;color:var(--ink);}
+  .company-card .cbal{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;}
+  .company-card .cbal.neg{color:var(--red);}
+  .flow-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--sub);}
+  .flow-row .v-in{color:var(--green);font-weight:600;}
+  .flow-row .v-out{color:var(--red);font-weight:600;}
+  .flow-bar{height:6px;border-radius:4px;background:var(--gold-soft);overflow:hidden;display:flex;}
+  .flow-bar .seg-in{background:var(--green);}
+  .flow-bar .seg-out{background:var(--red);}
+  .badge{
+    align-self:flex-start;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;
+  }
+  .badge.pos{background:var(--green-soft);color:var(--green);}
+  .badge.neg{background:var(--red-soft);color:var(--red);}
+  .acct-head{font-size:10.5px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;padding-top:10px;border-top:1px dashed var(--border);}
+  .acct-toggle-btn{
+    display:flex;align-items:center;gap:6px;background:none;border:none;padding:10px 0 0;margin:0;
+    font-family:inherit;text-align:left;cursor:pointer;width:100%;
+  }
+  .acct-toggle-btn:hover{color:var(--chart);}
+  .acct-toggle-arrow{font-size:9px;color:var(--sub);}
+  .acct-bal-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+  .acct-bal-table th:nth-child(1),.acct-bal-table td:nth-child(1){width:24%;}
+  .acct-bal-table th:nth-child(2),.acct-bal-table td:nth-child(2){width:19%;}
+  .acct-bal-table th:nth-child(n+3),.acct-bal-table td:nth-child(n+3){width:14.25%;}
+  .acct-bal-table th{text-align:right;color:var(--sub);font-weight:600;font-size:10.5px;padding:6px 8px;border-bottom:1px solid var(--border);}
+  .company-pair-row .acct-bal-table{font-size:11px;}
+  .company-pair-row .acct-bal-table th,.company-pair-row .acct-bal-table td{padding:5px 6px;}
+  .company-pair-row .acct-bal-table td:nth-child(1),.company-pair-row .acct-bal-table td:nth-child(2){white-space:normal;word-break:break-word;}
+  .acct-bal-table td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:'Space Grotesk',sans-serif;white-space:nowrap;}
+  .acct-bal-table td.acct-bal-number{font-size:11px;color:var(--sub);}
+  .acct-bal-table tr:last-child td{border-bottom:none;}
+  .acct-bal-table td.pos{color:var(--green);}
+  .acct-bal-table td.neg{color:var(--red);}
+  .acct-empty{font-size:11px;color:var(--sub);}
+  .badge.flat{background:#f1efe8;color:var(--sub);}
+
+
+  .table-card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:20px 22px;box-shadow:var(--shadow);overflow:visible;
+  }
+  .pie-col{flex:1 1 320px;display:flex;flex-direction:column;gap:10px;min-width:0;}
+  .pie-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;box-shadow:var(--shadow);
+    display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap;
+    flex:1 1 auto;height:260px;overflow:hidden;
+  }
+  .bar-col{flex:1 1 320px;display:flex;flex-direction:column;gap:10px;min-width:0;}  .bar-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;gap:12px;min-width:0;
+    flex:1 1 auto;height:260px;overflow:hidden;
+  }
+  .bar-card-head{
+    font-size:14px;font-weight:700;color:var(--ink);margin:4px 0 -4px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .bar-card-head::before{
+    content:'';width:4px;height:14px;background:var(--gold);border-radius:2px;flex:0 0 auto;
+  }
+  .bar-chart-h{display:flex;flex-direction:column;gap:9px;overflow-y:auto;max-height:100%;flex:1 1 auto;justify-content:flex-start;padding-right:2px;}
+  .bar-row{display:flex;align-items:center;gap:10px;font-size:11.5px;}
+  .bar-name{flex:0 0 96px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .bar-track{flex:1 1 auto;height:9px;border-radius:5px;background:var(--chart-soft);overflow:hidden;min-width:30px;}
+  .bar-fill{display:block;height:100%;border-radius:5px;background:var(--chart);transition:width .2s ease;}
+  .bar-val{flex:0 0 auto;font-family:'Space Grotesk',sans-serif;font-size:11.5px;color:var(--sub);min-width:118px;text-align:right;}
+  .bar-empty{color:var(--sub);font-size:13px;padding:8px 0;}
+  .pie-wrap{position:relative;width:190px;height:190px;flex:0 0 auto;}
+  .pie-center{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    text-align:center;pointer-events:none;
+  }
+  .pie-center-label{font-size:11px;color:var(--sub);}
+  .pie-center-value{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;margin-top:2px;}
+  .pie-legend{flex:1 1 220px;display:flex;flex-direction:column;gap:10px;}
+  .pie-legend-row{display:flex;align-items:center;gap:10px;font-size:13px;}
+  .pie-legend-swatch{width:11px;height:11px;border-radius:3px;flex:0 0 auto;}
+  .pie-legend-name{flex:0 0 auto;font-weight:600;min-width:52px;}
+  .pie-legend-bar{flex:1 1 auto;height:6px;border-radius:4px;background:var(--chart-soft);overflow:hidden;}
+  .pie-legend-bar-fill{display:block;height:100%;border-radius:4px;}
+  .pie-legend-val{flex:0 0 auto;font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--sub);white-space:nowrap;}
+  .pie-empty{color:var(--sub);font-size:13px;padding:8px 0;}
+  .detail-split{display:flex;flex-direction:column;gap:14px;align-items:stretch;}
+  .detail-col{flex:1 1 0;min-width:0;padding:16px 16px 18px;}
+  .detail-col-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:13.5px;font-weight:700;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--border);
+  }
+  .detail-col-head.in{color:var(--green);}
+  .detail-col-head.out{color:var(--red);}
+  .detail-col-head span:last-child{font-family:'Space Grotesk',sans-serif;font-size:13px;}
+  .detail-col table{font-size:12px;}
+  .detail-col th:first-child,.detail-col td:first-child{position:static;}
+  .detail-col table th:nth-child(1),.detail-col table td:nth-child(1){width:20%;}
+  .detail-col table th:nth-child(2),.detail-col table td:nth-child(2){width:22%;}
+  .detail-col table th:nth-child(3),.detail-col table td:nth-child(3){width:28%;}
+  .detail-col table th:nth-child(4),.detail-col table td:nth-child(4){width:15%;}
+  .detail-col table th:nth-child(5),.detail-col table td:nth-child(5){width:15%;}
+  @media (max-width:760px){
+    .detail-split{flex-direction:column;}
+  }
+
+  table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:12.5px;}
+  th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:normal;word-break:break-word;overflow-wrap:anywhere;}
+  th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);}
+  thead th{color:var(--sub);font-weight:600;font-size:11.5px;}
+  tbody tr:hover{background:#fbf9f3;}
+  td.pos{color:var(--green);white-space:nowrap;}
+  td.neg{color:var(--red);white-space:nowrap;}
+  .row-total td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none;}
+  .group-header-row td{
+    background:var(--bg);font-weight:700;font-size:12px;color:var(--ink);
+    padding:8px 8px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;
+  }
+  .group-header-row:hover td{background:#f1efe6;}
+  .group-header-sum{font-weight:500;color:var(--sub);font-size:11px;font-family:'Space Grotesk',sans-serif;margin-left:8px;}
+  .group-arrow{display:inline-block;width:12px;color:var(--sub);font-size:10px;}
+  .group-body tr:not(.group-header-row){display:none;}
+  .group-body.expanded tr:not(.group-header-row){display:table-row;}
+
+  .footnote{font-size:11.5px;color:var(--sub);text-align:center;margin-top:4px;}
+
+  @media (max-width:760px){
+    .kpi-strip{grid-template-columns:repeat(2,1fr);}
+  }
+
+  @media (max-width:600px){
+    body{padding:16px 10px 48px;}
+    .wrap{gap:16px;}
+    .title{font-size:21px;}
+    .baseline{padding:14px 16px;flex-direction:column;align-items:flex-start;gap:6px;}
+    .baseline .amt{font-size:17px;}
+    .kpi-strip{grid-template-columns:repeat(2,1fr);gap:8px;}
+    .kpi{padding:12px 14px;}
+    .kpi .value{font-size:17px;}
+    .company-card{padding:14px 16px;}
+    .cc-header{gap:8px;}
+    .company-pair-row{gap:10px;}
+    .company-pair-row .company-card{flex:1 1 100%;}
+    .company-pair-row-solo .company-card{flex:1 1 100%;}
+    .pie-col,.bar-col{flex:1 1 100%;}
+    .pie-card{flex-direction:column;align-items:center;text-align:center;height:auto;padding:16px;}
+    .pie-legend{width:100%;}
+    .bar-card{height:auto;padding:14px 16px;}
+    .acct-bal-table{font-size:10px;}
+    .acct-bal-table th,.acct-bal-table td{padding:5px 4px;}
+    .acct-bal-table th:nth-child(1),.acct-bal-table td:nth-child(1){width:30%;}
+    .acct-bal-table th:nth-child(2),.acct-bal-table td:nth-child(2){width:22%;white-space:normal;word-break:break-all;}
+    .detail-col{padding:12px 12px 14px;}
+    table{font-size:11px;}
+    th,td{padding:7px 6px;}
+    .tabs{gap:4px;}
+    .tab{padding:7px 11px;font-size:12px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="eyebrow">Daily Cash Report · 필름 · 공명</div>
+    <div class="title">자금일보 대시보드</div>
+    <div class="subtitle">2026년 8월 1일 ~ 8월 14일 · 7/31 마감잔고 기준 체크</div>
+  </div>
+
+  <div class="baseline">
+    <span class="tag">7/31 마감잔고 (시작 기준)</span>
+    <span class="amt" id="baseTotal">-</span>
+    <span class="amt-sub">7개 사업장 합계</span>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="kpi-strip">
+    <div class="kpi bal"><div class="label">당일 잔고 합계</div><div class="value" id="kpiBal">-</div></div>
+    <div class="kpi in"><div class="label">당일 입금 합계</div><div class="value" id="kpiIn">-</div></div>
+    <div class="kpi out"><div class="label">당일 지출 합계</div><div class="value" id="kpiOut">-</div></div>
+    <div class="kpi net"><div class="label">당일 순증감</div><div class="value" id="kpiNet">-</div></div>
+  </div>
+
+  <div class="section-title">사업장별 현황</div>
+  <div class="company-grid" id="companyGrid"></div>
+
+  <div class="company-pair-row">
+    <div class="pie-col">
+      <div class="bar-card-head">비용구분별 지출 비중</div>
+      <div class="pie-card">
+        <div class="pie-wrap">
+          <svg id="pieChart" viewBox="0 0 190 190" width="190" height="190"></svg>
+          <div class="pie-center">
+            <div class="pie-center-label">총 지출</div>
+            <div class="pie-center-value" id="pieCenterValue">-</div>
+          </div>
+        </div>
+        <div class="pie-legend" id="pieLegend"></div>
+      </div>
+    </div>
+
+    <div class="bar-col">
+      <div class="bar-card-head">실행구분별 지출</div>
+      <div class="bar-card">
+        <div class="bar-chart-h" id="barList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">일자별 거래상세내역</div>
+  <div class="detail-split">
+    <div class="table-card detail-col">
+      <div class="detail-col-head in"><span>입금</span><span id="detailInSum"></span></div>
+      <table id="detailTableIn"></table>
+      <div id="detailEmptyIn" style="display:none;padding:20px 4px;text-align:center;color:var(--sub);font-size:13px;">입금 내역 없음</div>
+    </div>
+    <div class="table-card detail-col">
+      <div class="detail-col-head out"><span>지출</span><span id="detailOutSum"></span></div>
+      <table id="detailTableOut"></table>
+      <div id="detailEmptyOut" style="display:none;padding:20px 4px;text-align:center;color:var(--sub);font-size:13px;">지출 내역 없음</div>
+    </div>
+  </div>
+
+  <div class="footnote">※ 잔고/입금/지출 합계: 「2026년 자금집계」 시트 · 거래상세내역: 각 사업장 「26.8월 지출예상 내역」 시트 기준 (예정 항목 포함, 실제 은행 원장과 소액 차이가 있을 수 있음)</div>
+
+</div>
+
+<script>
+const DATA = {"companies": ["(주)필름", "공명 연남", "공명 홍대", "공명 합정", "공명 망원", "공명 마곡", "필름(개인)"], "data": {"2026-07-31": {"입금": {"vals": [209076255, 4564274, 1919445, 3681000, 1304924, 3755215, 0], "total": 224301113}, "지출": {"vals": [223383952, 18124700, 21508600, 4810550, 7658530, 18138600, 18609627], "total": 312234559}, "잔고": {"vals": [2158159, 192514, 271879, 141105, 96477, 115193, 5547], "total": 2980874}}, "2026-08-01": {"입금": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "지출": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "잔고": {"vals": [2158159, 192514, 271879, 141105, 96477, 115193, 5547], "total": 2980874}}, "2026-08-02": {"입금": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "지출": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "잔고": {"vals": [2158159, 192514, 271879, 141105, 96477, 115193, 5547], "total": 2980874}}, "2026-08-03": {"입금": {"vals": [5985000, 4905719, 1865828, 0, 1485278, 3997982, 0], "total": 18239807}, "지출": {"vals": [6290824, 5000000, 2000000, 0, 1500000, 4000000, 0], "total": 18790824}, "잔고": {"vals": [1852335, 98233, 137707, 141105, 81755, 113175, 5547], "total": 2429857}}, "2026-08-04": {"입금": {"vals": [8282562, 7543346, 3731299, 198000, 1536543, 4455886, 2200000], "total": 27947636}, "지출": {"vals": [8700000, 5000000, 3000000, 0, 1500000, 4000000, 2200000], "total": 24400000}, "잔고": {"vals": [1434897, 2641579, 869006, 339105, 118298, 569061, 5547], "total": 5977493}}, "2026-08-05": {"입금": {"vals": [25000000, 6573547, 5457053, 0, 4658316, 12347752, 20000000], "total": 74036668}, "지출": {"vals": [24933768, 7756200, 5504000, 141105, 4294480, 10000000, 19800000], "total": 72429553}, "잔고": {"vals": [1501129, 1458926, 822059, 198000, 482134, 2916813, 205547], "total": 7584608}}, "2026-08-06": {"입금": {"vals": [0, 2735634, 2854845, 700000, 1815497, 3447904, 0], "total": 11553880}, "지출": {"vals": [700000, 0, 0, 0, 0, 0, 0], "total": 700000}, "잔고": {"vals": [801129, 4194560, 3676904, 898000, 2297631, 6364717, 205547], "total": 18438488}}, "2026-08-07": {"입금": {"vals": [4515800, 7628997, 1734965, 0, 2657611, 4422396, 0], "total": 20959769}, "지출": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "잔고": {"vals": [5316929, 11823557, 5411869, 898000, 4955242, 10787113, 205547], "total": 39398257}}, "2026-08-08": {"입금": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "지출": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "잔고": {"vals": [5316929, 11823557, 5411869, 898000, 4955242, 10787113, 205547], "total": 39398257}}, "2026-08-09": {"입금": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "지출": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "잔고": {"vals": [5316929, 11823557, 5411869, 898000, 4955242, 10787113, 205547], "total": 39398257}}, "2026-08-10": {"입금": {"vals": [48120180, 19880059, 1659041, 0, 808164, 3391880, 17864993], "total": 91724317}, "지출": {"vals": [52334805, 31291317, 6812760, 788610, 5619470, 13298366, 17915570], "total": 128060898}, "잔고": {"vals": [1102304, 412299, 258150, 109390, 143936, 880627, 154970], "total": 3061676}}, "2026-08-11": {"입금": {"vals": [3607732, 4088543, 3236839, 0, 1216245, 4424883, 600000], "total": 17174242}, "지출": {"vals": [4175000, 1500000, 0, 0, 0, 0, 560344], "total": 6235344}, "잔고": {"vals": [535036, 3000842, 3494989, 109390, 1360181, 5305510, 194626], "total": 14000574}}, "2026-08-12": {"입금": {"vals": [20000000, 5893073, 5417198, 0, 4145304, 11955258, 0], "total": 47410833}, "지출": {"vals": [20000000, 8001000, 4000000, 0, 2000000, 11000000, 0], "total": 45001000}, "잔고": {"vals": [535036, 892915, 4912187, 109390, 3505485, 6260768, 194626], "total": 16410407}}, "2026-08-13": {"입금": {"vals": [55256962, 2387500, 2181621, 0, 1068715, 3180471, 0], "total": 64075269}, "지출": {"vals": [0, 0, 0, 0, 0, 0, 0], "total": 0}, "잔고": {"vals": [55791998, 3280415, 7093808, 109390, 4574200, 9441239, 194626], "total": 80485676}}, "2026-08-14": {"입금": {"vals": [112521322, 44341884, 18446369, 3100000, 6547817, 9745504, 0], "total": 194702896}, "지출": {"vals": [167929067, 46686201, 25274334, 3131460, 11070266, 18681959, 0], "total": 272773287}, "잔고": {"vals": [384253, 936098, 265843, 77930, 51751, 504784, 194626], "total": 2415285}}}};
+const TXN = {"(주)필름": [{"date": "2026-08-03", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "콤비마케팅연구원", "note": "<어떻게 살아낼 것인가> 현매 출고", "amount": 2086000.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "주식회사 모스피어", "note": "<조용히 계속하는 사람> 저자 구매", "amount": 399000.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 망원점", "note": null, "amount": 1500000.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 홍대점", "note": null, "amount": 2000000.0, "memo": null}, {"date": "2026-08-03", "type": "지출", "cat": "단기차입금", "costtype": "고정비", "vendor": "하나은행", "note": " IP담보대출 상환 분할 납부", "amount": 3000000.0, "memo": "자동이체(2일)"}, {"date": "2026-08-03", "type": "지출", "cat": "이자비용", "costtype": "고정비", "vendor": "하나은행", "note": " IP담보대출 이자 140,000,000_5.879%", "amount": 490824.0, "memo": "자동이체(2일)"}, {"date": "2026-08-03", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 연남점", "note": "전도금", "amount": 2300000.0, "memo": null}, {"date": "2026-08-03", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 마곡점", "note": "전도금", "amount": 500000.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 1782562.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 홍대", "note": null, "amount": 3000000.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 마곡", "note": null, "amount": 2000000.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 망원", "note": null, "amount": 1500000.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "광고선전비", "costtype": "변동비", "vendor": "국민카드", "note": "국민카드 선결제", "amount": 5000000.0, "memo": "법인카드대금(15일)"}, {"date": "2026-08-04", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 연남점", "note": "전도금", "amount": 1500000.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "기타", "costtype": "변동비", "vendor": "대표이사", "note": "대표이사인출금", "amount": 2200000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 망원", "note": null, "amount": 3000000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 연남", "note": null, "amount": 7000000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 홍대", "note": null, "amount": 5000000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 마곡", "note": null, "amount": 10000000.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "[카페 공명]본사 SPC 7월 결제 건", "amount": 0.0, "memo": "세금계산서(3일)"}, {"date": "2026-08-05", "type": "지출", "cat": "외주용역비", "costtype": "변동비", "vendor": "송은숙", "note": "송은숙 지급 건 ", "amount": 933235.0, "memo": "사업소득(개인사업자)"}, {"date": "2026-08-05", "type": "지출", "cat": "기타", "costtype": "변동비", "vendor": "대표이사", "note": "대표이사인출금", "amount": 20000000.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "카드대금", "costtype": "고정비", "vendor": "하나카드", "note": "하나카드 선결제", "amount": 4000533.0, "memo": null}, {"date": "2026-08-06", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 합정", "note": "전도금", "amount": 700000.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "전자책입금", "costtype": "매출", "vendor": "리디북스", "note": "e-book", "amount": 736340.0, "memo": "5일"}, {"date": "2026-08-07", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 11160.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 169880.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 2949850.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 291710.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "기타", "vendor": "출협국회", "note": null, "amount": 253500.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "기타", "vendor": "소셜링", "note": "이자소득세 오입금 반환", "amount": 103360.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "선급금반제", "costtype": "기타", "vendor": "하나은행 합정역 금융센터 지점", "note": "요구불계좌 선급금", "amount": 10000000.0, "memo": "10일"}, {"date": "2026-08-10", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "자유서적주식회사", "note": "전월 16~말일 출고분", "amount": 1024680.0, "memo": "1일(1차 입금)"}, {"date": "2026-08-10", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "콤비마케팅연구원", "note": "<어떻게 살아낼 것인가> 현매 출고", "amount": 1043000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "가수금", "costtype": "기타", "vendor": "대표이사", "note": "대표이사 가수금", "amount": 27000000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "로렌스", "note": "카페공명홈페이지 원두 매출", "amount": 52500.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 홍대", "note": null, "amount": 4000000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 마곡", "note": null, "amount": 1000000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 망원", "note": null, "amount": 4000000.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "이자비용", "costtype": "고정비", "vendor": "중소벤처기업진흥공단", "note": "신시장진출 300,000,000", "amount": 779917.0, "memo": "자동이체(08일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "건강보험공단", "note": "7월 귀속 건강보험", "amount": 6058000.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "국민연금공단", "note": "7월 귀속 국민연금", "amount": 6470360.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "근로복지공단", "note": "7월 귀속 고용보험 산재보험 ", "amount": 1660910, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "단기차입금", "costtype": "고정비", "vendor": "하나은행", "note": "하나[신성장일자리](분할상환) 원금_300,000,000_5.09%", "amount": 10000000.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "이자비용", "costtype": "고정비", "vendor": "하나은행", "note": "하나[신성장일자리](분할상환) 이자_300,000,000_5.09%", "amount": 0.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "이자비용", "costtype": "고정비", "vendor": "하나은행", "note": "하나[신성장일자리](분할상환) 이자_300,000,000_5.09%", "amount": 665998.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "영등포세무서", "note": "6월 귀속 근로소득세", "amount": 4399330.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "영등포세무서", "note": "6월 귀속 근로소득세(사업소득)", "amount": 2854390.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "영등포세무서", "note": "6월기타소득/이자소득 법인원천세", "amount": 564160.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "영등포구청", "note": "6월 근로/사업소득 주민세", "amount": 781740.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "하나은행", "note": "CMS", "amount": 100000.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 연남점", "note": "전도금", "amount": 18000000.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 연남", "note": null, "amount": 1500000.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "기타", "vendor": "김봉임", "note": null, "amount": 25400.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 1165600.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 916732.0, "memo": null}, {"date": "2026-08-11", "type": "지출", "cat": "광고선전비", "costtype": "변동비", "vendor": "비즈까페", "note": "유튜브 제휴 마케팅(계약금)", "amount": 3575000.0, "memo": "세금계산서"}, {"date": "2026-08-11", "type": "지출", "cat": "기타", "costtype": "변동비", "vendor": "대표이사", "note": "대표이사인출금", "amount": 600000.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 망원", "note": null, "amount": 2000000.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 연남", "note": null, "amount": 3000000.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 홍대", "note": null, "amount": 4000000.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "전도금 상환", "costtype": "기타", "vendor": "공명 마곡", "note": null, "amount": 11000000.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "기타", "costtype": "변동비", "vendor": "대표이사", "note": "대표이사 인출금", "amount": 10000000.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "카드대금", "costtype": "고정비", "vendor": "하나카드", "note": "하나카드 선결제", "amount": 3000000.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "광고선전비", "costtype": "변동비", "vendor": "국민카드", "note": "국민카드 선결제", "amount": 7000000.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "(주)북센", "note": "도서(13일)", "amount": 55256962.0, "memo": "13일"}, {"date": "2026-08-14", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 1847600.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 668670.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "쿠팡", "note": "도서", "amount": 708226.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "예스이십사 주식회사", "note": "도서(일시)", "amount": 57239240.0, "memo": "15일"}, {"date": "2026-08-14", "type": "입금", "cat": "도서입금", "costtype": "매출", "vendor": "(주)알라딘커뮤니케이션", "note": "도서(일시)", "amount": 49702016.0, "memo": "15일(주말이후입금)"}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "소셜링", "note": "1512호 관리비", "amount": 2355570.0, "memo": "15일"}, {"date": "2026-08-14", "type": "지출", "cat": "외주용역비", "costtype": "변동비", "vendor": "송은숙", "note": "송은숙 지급 건 ", "amount": 5076000.0, "memo": "사업소득(개인사업자)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월 직원급여", "amount": 80319098, "memo": "인건비(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "소셜링", "note": "7월 인건비 청구 분", "amount": 3218377.0, "memo": "세금계산서(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "오버컴퍼니", "note": "7월 인건비 청구 분", "amount": 6088943.0, "memo": "세금계산서(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "노선희", "note": "사업소득자 지급의 건", "amount": 103989.0, "memo": "사업소득(개인사업자)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월 직원개인경비정산", "amount": 1397110.0, "memo": "개인경비(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "운반비", "costtype": "고정비", "vendor": "롯데글로벌로지스(주)", "note": "본사 출고건 택배비 정산", "amount": 625550.0, "memo": "세금계산서(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 연남점", "note": "전도금", "amount": 40000000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 홍대점", "note": "전도금", "amount": 17000000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 합정점", "note": "전도금", "amount": 3100000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 망원점", "note": "전도금", "amount": 5400000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "전도금", "costtype": "변동비", "vendor": "공명 마곡점", "note": "전도금", "amount": 5600000.0, "memo": null}], "공명 연남": [{"date": "2026-08-03", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2018362.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 133297.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "토스페이", "note": null, "amount": 62416.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": null, "amount": 0.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": null, "amount": 2300000.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "럭키밀", "note": "7월 럭키밀", "amount": 391644.0, "memo": null}, {"date": "2026-08-03", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "7월분 베이커리 원재료 2차 선결제 건", "amount": 5000000.0, "memo": "매주 월요일"}, {"date": "2026-08-04", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 4328593.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 102130.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "토스페이", "note": null, "amount": 6371.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": null, "amount": 93222.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": "7월분 매장 현금", "amount": 1513030.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": null, "amount": 1500000.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "7월분 베이커리 원재료 3차 선결제 건", "amount": 5000000.0, "memo": "매주 월요일"}, {"date": "2026-08-05", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 227115.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 90866.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 5893886.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 361680.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "세스코", "note": "세스코 해지 위약금", "amount": 756200.0, "memo": "청구서 / 신고서"}, {"date": "2026-08-05", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 7000000.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2156032.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 171104.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 12498.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "패스트파이브(주)", "note": "7월 패스트파이브 매출", "amount": 396000.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2029332.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 166289.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 20633.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 12743.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "일자리장려금", "note": null, "amount": 5400000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1805844.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 56767.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 17448.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 지급", "amount": 18000000.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "(주)고요환경", "note": "음식물처리비용", "amount": 245000.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "건강보험공단", "note": "7월 귀속 건강보험(건강/장기)", "amount": 2753000.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "국민연금공단", "note": "7월 귀속 국민연금", "amount": 3278760.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "근로복지공단", "note": "7월 귀속 고용보험 산재보험", "amount": 1070810, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포구청", "note": "6월귀속_근로소득 지방소득세", "amount": 0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "한국특허기술진흥", "note": "7월 임차료", "amount": 11334510.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "한국특허기술진흥", "note": "7월 전기료", "amount": 3551237.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "한국특허기술진흥", "note": "7월 관리비", "amount": 4058000.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "한국특허기술진흥", "note": "7월 수도료", "amount": 0.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "7월분 베이커리 원재료 4차 선결제 건", "amount": 5000000.0, "memo": "매주 월요일"}, {"date": "2026-08-11", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3951992.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 34235.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 26839.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 75477.0, "memo": null}, {"date": "2026-08-11", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 1500000.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 5404286.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 379788.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 11272.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 92727.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": "매장매출", "amount": 5000.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "(재) 한국특허기술", "note": "기타수수료", "amount": 1000.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 3000000.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "7월분 베이커리 원재료 5차 선결제 건", "amount": 5000000.0, "memo": "매주 월요일"}, {"date": "2026-08-13", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2186400.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 124700.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 52590.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 16516.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "나이스정보통신(주", "note": "매장매출", "amount": 7294.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2118119.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 186419.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금입금", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 31955.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 5391.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 지급", "amount": 40000000.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "쿠팡페이", "note": null, "amount": 2000000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 임.직원급여", "amount": 28929243.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 일용급여", "amount": 4962122.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산", "amount": 595020.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산(추가분)", "amount": 138520.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "최다연 퇴사자 퇴직금", "amount": 3034226.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "윤초희 사업소득자 지급의 건", "amount": 375070.0, "memo": "사업소득(개인사업자)"}, {"date": "2026-08-14", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "신화케이엘통운", "note": "베이커리 운송 27월 7월분 비용 지급 건", "amount": 4100000.0, "memo": "세금계산서(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "물품대", "costtype": "변동비", "vendor": null, "note": "티백 구매", "amount": 2552000.0, "memo": "세금계산서"}, {"date": "2026-08-14", "type": "지출", "cat": "카드대금", "costtype": "고정비", "vendor": "하나카드", "note": "하나카드 선결제", "amount": 2000000.0, "memo": null}], "공명 홍대": [{"date": "2026-08-03", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1531195.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 13861.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "럭키밀", "note": "7월 럭키밀", "amount": 272448.0, "memo": "1일"}, {"date": "2026-08-03", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 32151.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 16173.0, "memo": null}, {"date": "2026-08-03", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 2000000.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3653665.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 40483.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 37151.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 3000000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 5173400.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 63839.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 214913.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 4901.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "세스코", "note": "세스코 해지 위약금", "amount": 471000.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "동탄식기세척기", "note": "배수 점검 출장비", "amount": 33000.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 5000000.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1538751.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 14194.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 54500.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "패스트파이브(주)", "note": "7월 패스트파이브 매출", "amount": 165000.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": "7월분 매장 현금", "amount": 1082400.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1640456.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 1193.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 86455.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 6861.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1628348.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 4129.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 15782.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 10782.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "(주)고요환경", "note": "음식물처리비용", "amount": 104000.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "서울도시가스㈜", "note": "가스요금(06.18 ~ 07.17)", "amount": 83240.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "건강보험공단", "note": "7월 귀속 건강보험(건강/장기)", "amount": 1094800.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "국민연금공단", "note": "7월 귀속 국민연금", "amount": 1140340.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "근로복지공단", "note": "7월 귀속 고용보험 산재보험", "amount": 390380, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포세무서", "note": "6월귀속_근로소득세", "amount": 0.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포세무서", "note": "6월귀속_사업소득세", "amount": 0.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포구청", "note": "6월귀속_근로소득 지방소득세", "amount": 0.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 상환", "amount": 4000000.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3190380.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 35872.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 10587.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 5027589.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 174647.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 197514.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 17448.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 상환", "amount": 4000000.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2014734.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 63768.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 93708.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 9411.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1362332.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 27723.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 50285.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 6029.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 지급", "amount": 17000000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월임직원급여", "amount": 9155803.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월일용급여", "amount": 4602148.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산", "amount": 153583.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "정소희", "note": "사업소득자 지급건", "amount": 335980.0, "memo": "사업소득(개인사업자)"}, {"date": "2026-08-14", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "차수아", "note": " '어떻게 살아낼 것인가' 책 파트타이머 구매 지출 요청의 건", "amount": 26820.0, "memo": "영수증"}, {"date": "2026-08-14", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "이지원", "note": "임차료(7/15~8/14)", "amount": 11000000.0, "memo": "세금계산서(16일)"}], "공명 합정": [{"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "포항상공ㄹ51", "note": "원두매출", "amount": 198000.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "한국전력공사", "note": "7월분 전기요금", "amount": 141105.0, "memo": "세금계산서(5일)"}, {"date": "2026-08-05", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "한국전력공사", "note": "7월분 전기요금", "amount": 435815, "memo": "세금계산서(5일)"}, {"date": "2026-08-05", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "세스코", "note": "세스코 해지 위약금", "amount": 240950.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": null, "amount": 700000.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "건강보험공단", "note": "7월 귀속 건강보험(건강/장기)", "amount": 265120.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "국민연금공단", "note": "7월 귀속 국민연금", "amount": 305120.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "근로복지공단", "note": "7월 귀속 고용보험 산재보험", "amount": 97260, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포세무서", "note": "6월귀속_근로소득세", "amount": 110100.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포구청", "note": "6월귀속_근로소득 지방소득세", "amount": 11010.0, "memo": "납부서(10일)"}, {"date": "2026-08-14", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 지급", "amount": 3100000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산", "amount": 0.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 직원급여", "amount": 3131460.0, "memo": "대량이체(15일)"}], "공명 망원": [{"date": "2026-08-03", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1040190.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 25127.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "토스페이", "note": null, "amount": 14802.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": null, "amount": 11272.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": null, "amount": 6500.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "럭키밀", "note": "7월 럭키밀", "amount": 387387.0, "memo": "1일"}, {"date": "2026-08-03", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 1500000.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1477631.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "토스페이", "note": null, "amount": 48325.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": null, "amount": 10587.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 1500000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 4410816.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 72044.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 153402.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 22054.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "한국전력공사\n", "note": "7월분 전기요금", "amount": 1071820.0, "memo": "세금계산서(5일)"}, {"date": "2026-08-05", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "세스코", "note": "세스코 해지 위약금", "amount": 222660.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 3000000.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": "7월 매장 현금", "amount": 239500.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 863733.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 46959.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 49305.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "패스트파이브(주)", "note": "7월 패스트파이브 매출", "amount": 616000.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 808966.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 2409.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 33003.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 13233.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "일자리장려금", "note": null, "amount": 1800000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": "매장매출", "amount": 802869.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 5295.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": "㈜고요환경", "note": "7월분_음식물처리비용", "amount": 100000.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "건강보험공단", "note": "7월 귀속 건강보험(건강/장기)", "amount": 418600.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "국민연금공단", "note": "7월 귀속 국민연금", "amount": 895020.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "근로복지공단", "note": "7월 귀속 고용보험 산재보험", "amount": 205850, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포세무서", "note": "6월귀속_근로소득세", "amount": 0.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포구청", "note": "6월귀속_근로소득 지방소득세", "amount": 0.0, "memo": "납부서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 상환", "amount": 4000000.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1169880.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 43915.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 2450.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3880442.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 158215.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 106647.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 상환", "amount": 2000000.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1056948.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 9317.0, "memo": "12~14일"}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 2450.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "카카오페이", "note": "매장매출", "amount": 0.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 1108382.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 13558.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "토스페이", "note": "매장매출", "amount": 25877.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 지급", "amount": 5400000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 직원급여", "amount": 6640856.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 일용급여", "amount": 3823330.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산", "amount": 214600.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 바리스타 사업소득 지급", "amount": 259480.0, "memo": "사업소득(개인사업자)"}, {"date": "2026-08-14", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "비전전기", "note": "전선 압착 공사건", "amount": 132000.0, "memo": "세금계산서"}], "공명 마곡": [{"date": "2026-08-03", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3352345.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 51536.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 71262.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 22839.0, "memo": null}, {"date": "2026-08-03", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금", "amount": 500000.0, "memo": null}, {"date": "2026-08-03", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "마곡책빵  SPC 대금 선입금", "amount": 4000000.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 4323130.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 76003.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 27445.0, "memo": null}, {"date": "2026-08-04", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 29308.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "물품대", "costtype": "고정비", "vendor": "SPC", "note": "마곡책빵  SPC 대금 선입금", "amount": 2000000.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 2000000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 11604837.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 281133.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 390814.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 70968.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": "전도금 상환", "costtype": "변동비", "vendor": "(주)필름", "note": "전도금 상환", "amount": 10000000.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3244255.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 45738.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 157911.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 0.0, "memo": null}, {"date": "2026-08-06", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "제로페이", "amount": 0.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3340943.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 88519.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 102626.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 17008.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "제로페이", "amount": 0.0, "memo": null}, {"date": "2026-08-07", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "현금매출", "note": "7월분 매장 현금", "amount": 873300.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3205380.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 61722.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 76650.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 48128.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "건강보험공단", "note": "7월 귀속 건강보험(건강/장기)", "amount": 1494340.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "국민연금공단", "note": "7월 귀속 국민연금", "amount": 1793120.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "근로복지공단", "note": "7월 귀속 고용보험 산재보험", "amount": 597890, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "기타 경상 지출", "costtype": "고정비", "vendor": " ㈜코람코", "note": "마곡 케이스퀘어 7월 관리비", "amount": 8366336.0, "memo": "세금계산서(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포세무서", "note": "6월귀속_근로소득세", "amount": 42450.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "제세공과", "costtype": "고정비", "vendor": "마포구청", "note": "6월귀속_근로소득 지방소득세", "amount": 4230.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 상환", "amount": 1000000.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 4217311.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 68578.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 119438.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 19556.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 11233109.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 258173.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 392764.0, "memo": null}, {"date": "2026-08-12", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 71212.0, "memo": null}, {"date": "2026-08-12", "type": "지출", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 상환", "amount": 11000000.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 2864964.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 93488.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 164480.0, "memo": null}, {"date": "2026-08-13", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 57539.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "카드입금", "costtype": "매출", "vendor": "카드매출", "note": "매장매출", "amount": 3061869.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "배달매출", "note": "매장매출", "amount": 26686.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "기타매출", "note": "토스페이", "amount": 48518.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "기타입금", "costtype": "매출", "vendor": "기타매출", "note": "카카오페이", "amount": 8431.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "전도금", "costtype": "전도금", "vendor": "(주)필름", "note": "전도금 지급", "amount": 5600000.0, "memo": null}, {"date": "2026-08-14", "type": "입금", "cat": "현금입금", "costtype": "매출", "vendor": "쿠팡페이", "note": null, "amount": 1000000.0, "memo": null}, {"date": "2026-08-14", "type": "지출", "cat": "기타 경상 지출", "costtype": "변동비", "vendor": "더바른환경", "note": "음식물쓰레기 처리비용", "amount": 104400.0, "memo": "세금계산서"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 직원급여", "amount": 9071177.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "급여", "note": "7월 일용직급여", "amount": 9325922.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산", "amount": 126820.0, "memo": "대량이체(15일)"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산(도서구매건)", "amount": 26820.0, "memo": "영수증"}, {"date": "2026-08-14", "type": "지출", "cat": "급여", "costtype": "인건비", "vendor": "직원", "note": "7월분_직원개인경비정산(도서구매건)", "amount": 26820.0, "memo": "영수증"}], "필름(개인)": [{"date": "2026-08-04", "type": "입금", "cat": null, "costtype": "가수금", "vendor": "대표이사", "note": "대표이사 가수금 입금", "amount": 2200000.0, "memo": null}, {"date": "2026-08-04", "type": "지출", "cat": null, "costtype": "변동비", "vendor": "법무법인 대륜", "note": "세무조사 착수금", "amount": 2200000.0, "memo": null}, {"date": "2026-08-05", "type": "입금", "cat": null, "costtype": "가수금", "vendor": "대표이사", "note": "대표이사 가수금 입금", "amount": 20000000.0, "memo": null}, {"date": "2026-08-05", "type": "지출", "cat": null, "costtype": "변동비", "vendor": "법무법인 대륜", "note": "세무조사 수수료", "amount": 19800000.0, "memo": null}, {"date": "2026-08-10", "type": "입금", "cat": null, "costtype": "매출", "vendor": "영풍문고", "note": "발행일자 : 26.07.06", "amount": 10730243.0, "memo": "+55일"}, {"date": "2026-08-10", "type": "입금", "cat": null, "costtype": "매출", "vendor": "영풍문고", "note": "발행일자 : 26.07.13", "amount": 2975310.0, "memo": "+55일"}, {"date": "2026-08-10", "type": "입금", "cat": null, "costtype": "매출", "vendor": "(주)가람디엠씨", "note": "도서", "amount": 4159440.0, "memo": "10일"}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "김기용", "note": "하나은행(78242) 대환대출원금 및 이자 일부상환", "amount": 590000.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "김기용", "note": "하나은행(78242) 대환대출원금 및 이자 일부상환", "amount": 220000.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "국민연금공단", "note": "국민연금", "amount": 77680.0, "memo": "자동이체(10일)"}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "마포세무서", "note": "6월귀속_사업소득세", "amount": 21720.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "마포구청", "note": "6월귀속_사업소득 지방소득세", "amount": 2170.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "신한은행", "note": "어음수수료", "amount": 2000.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "신한은행", "note": "어음수수료", "amount": 2000.0, "memo": null}, {"date": "2026-08-10", "type": "지출", "cat": null, "costtype": "인출금", "vendor": "대표이사", "note": "대표이사 인출금", "amount": 17000000.0, "memo": null}, {"date": "2026-08-11", "type": "입금", "cat": null, "costtype": "가수금", "vendor": "대표이사", "note": "대표이사 가수금 입금", "amount": 600000.0, "memo": null}, {"date": "2026-08-11", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "소상공인시장대출", "note": "소상공인시장 대출원금 일부상환", "amount": 555550.0, "memo": "자동이체(09일)_신한"}, {"date": "2026-08-11", "type": "지출", "cat": null, "costtype": "고정비", "vendor": "소상공인시장대출", "note": "대출이자", "amount": 4794.0, "memo": "자동이체(09일)_신한"}]};
+
+const ACCOUNT_BAL = {"공명 홍대": [{"bank": "하나", "acct": "357-910033-54704", "alias": "입금전용", "byDate": {"2026-08-01": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-02": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-03": {"prev": 0, "in": 1865828, "out": 1849655, "bal": 16173}, "2026-08-04": {"prev": 16173, "in": 3731299, "out": 3747472, "bal": 0}, "2026-08-05": {"prev": 0, "in": 5457053, "out": 5452152, "bal": 4901}, "2026-08-06": {"prev": 4901, "in": 2854845, "out": 0, "bal": 2859746}, "2026-08-07": {"prev": 2859746, "in": 1734965, "out": 0, "bal": 4594711}, "2026-08-08": {"prev": 4594711, "in": 0, "out": 0, "bal": 4594711}, "2026-08-09": {"prev": 4594711, "in": 0, "out": 0, "bal": 4594711}, "2026-08-10": {"prev": 4594711, "in": 1659041, "out": 6203764, "bal": 49988}, "2026-08-11": {"prev": 49988, "in": 3236839, "out": 0, "bal": 3286827}, "2026-08-12": {"prev": 3286827, "in": 5417198, "out": 8686577, "bal": 17448}, "2026-08-13": {"prev": 17448, "in": 2181621, "out": 0, "bal": 2199069}, "2026-08-14": {"prev": 2199069, "in": 1446369, "out": 3645438, "bal": 0}}}, {"bank": "하나", "acct": "357-910033-55304", "alias": "출금전용", "byDate": {"2026-08-01": {"prev": 271879, "in": 0, "out": 0, "bal": 271879}, "2026-08-02": {"prev": 271879, "in": 0, "out": 0, "bal": 271879}, "2026-08-03": {"prev": 271879, "in": 1849655, "out": 2000000, "bal": 121534}, "2026-08-04": {"prev": 121534, "in": 3747472, "out": 3000000, "bal": 869006}, "2026-08-05": {"prev": 869006, "in": 5452152, "out": 5504000, "bal": 817158}, "2026-08-06": {"prev": 817158, "in": 0, "out": 0, "bal": 817158}, "2026-08-07": {"prev": 817158, "in": 0, "out": 0, "bal": 817158}, "2026-08-08": {"prev": 817158, "in": 0, "out": 0, "bal": 817158}, "2026-08-09": {"prev": 817158, "in": 0, "out": 0, "bal": 817158}, "2026-08-10": {"prev": 817158, "in": 6203764, "out": 6812760, "bal": 208162}, "2026-08-11": {"prev": 208162, "in": 0, "out": 0, "bal": 208162}, "2026-08-12": {"prev": 208162, "in": 8686577, "out": 4000000, "bal": 4894739}, "2026-08-13": {"prev": 4894739, "in": 0, "out": 0, "bal": 4894739}, "2026-08-14": {"prev": 4894739, "in": 20645438, "out": 25274334, "bal": 265843}}}], "공명 합정": [{"bank": "하나", "acct": "569-910034-98904", "alias": "출금전용", "byDate": {"2026-08-01": {"prev": 141105, "in": 0, "out": 0, "bal": 141105}, "2026-08-02": {"prev": 141105, "in": 0, "out": 0, "bal": 141105}, "2026-08-03": {"prev": 141105, "in": 0, "out": 0, "bal": 141105}, "2026-08-04": {"prev": 141105, "in": 0, "out": 0, "bal": 141105}, "2026-08-05": {"prev": 141105, "in": 0, "out": 141105, "bal": 0}, "2026-08-06": {"prev": 0, "in": 700000, "out": 0, "bal": 700000}, "2026-08-07": {"prev": 700000, "in": 0, "out": 0, "bal": 700000}, "2026-08-08": {"prev": 700000, "in": 0, "out": 0, "bal": 700000}, "2026-08-09": {"prev": 700000, "in": 0, "out": 0, "bal": 700000}, "2026-08-10": {"prev": 700000, "in": 198000, "out": 788610, "bal": 109390}, "2026-08-11": {"prev": 109390, "in": 0, "out": 0, "bal": 109390}, "2026-08-12": {"prev": 109390, "in": 0, "out": 0, "bal": 109390}, "2026-08-13": {"prev": 109390, "in": 0, "out": 0, "bal": 109390}, "2026-08-14": {"prev": 109390, "in": 3100000, "out": 3131460, "bal": 77930}}}, {"bank": "하나", "acct": "569-910034-97204", "alias": "입금전용", "byDate": {"2026-08-01": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-02": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-03": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-04": {"prev": 0, "in": 198000, "out": 0, "bal": 198000}, "2026-08-05": {"prev": 198000, "in": 0, "out": 0, "bal": 198000}, "2026-08-06": {"prev": 198000, "in": 0, "out": 0, "bal": 198000}, "2026-08-07": {"prev": 198000, "in": 0, "out": 0, "bal": 198000}, "2026-08-08": {"prev": 198000, "in": 0, "out": 0, "bal": 198000}, "2026-08-09": {"prev": 198000, "in": 0, "out": 0, "bal": 198000}, "2026-08-10": {"prev": 198000, "in": 0, "out": 198000, "bal": 0}, "2026-08-11": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-12": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-13": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-14": {"prev": 0, "in": 0, "out": 0, "bal": 0}}}], "공명 망원": [{"bank": "하나", "acct": "569-910038-57604", "alias": "출금전용", "byDate": {"2026-08-01": {"prev": 63640, "in": 0, "out": 0, "bal": 63640}, "2026-08-02": {"prev": 63640, "in": 0, "out": 0, "bal": 63640}, "2026-08-03": {"prev": 63640, "in": 1500343, "out": 1500000, "bal": 63983}, "2026-08-04": {"prev": 63983, "in": 1543728, "out": 1500000, "bal": 107711}, "2026-08-05": {"prev": 107711, "in": 4493447, "out": 4294480, "bal": 306678}, "2026-08-06": {"prev": 306678, "in": 0, "out": 0, "bal": 306678}, "2026-08-07": {"prev": 306678, "in": 0, "out": 0, "bal": 306678}, "2026-08-08": {"prev": 306678, "in": 0, "out": 0, "bal": 306678}, "2026-08-09": {"prev": 306678, "in": 0, "out": 0, "bal": 306678}, "2026-08-10": {"prev": 306678, "in": 5456728, "out": 5619470, "bal": 143936}, "2026-08-11": {"prev": 143936, "in": 0, "out": 0, "bal": 143936}, "2026-08-12": {"prev": 143936, "in": 5361549, "out": 2000000, "bal": 3505485}, "2026-08-13": {"prev": 3505485, "in": 0, "out": 0, "bal": 3505485}, "2026-08-14": {"prev": 3505485, "in": 7616532, "out": 11070266, "bal": 51751}}}, {"bank": "하나", "acct": "569-910038-58204", "alias": "입금전용", "byDate": {"2026-08-01": {"prev": 32837, "in": 0, "out": 0, "bal": 32837}, "2026-08-02": {"prev": 32837, "in": 0, "out": 0, "bal": 32837}, "2026-08-03": {"prev": 32837, "in": 1485278, "out": 1500343, "bal": 17772}, "2026-08-04": {"prev": 17772, "in": 1536543, "out": 1543728, "bal": 10587}, "2026-08-05": {"prev": 10587, "in": 4658316, "out": 4493447, "bal": 175456}, "2026-08-06": {"prev": 175456, "in": 1815497, "out": 0, "bal": 1990953}, "2026-08-07": {"prev": 1990953, "in": 2657611, "out": 0, "bal": 4648564}, "2026-08-08": {"prev": 4648564, "in": 0, "out": 0, "bal": 4648564}, "2026-08-09": {"prev": 4648564, "in": 0, "out": 0, "bal": 4648564}, "2026-08-10": {"prev": 4648564, "in": 808164, "out": 5456728, "bal": 0}, "2026-08-11": {"prev": 0, "in": 1216245, "out": 0, "bal": 1216245}, "2026-08-12": {"prev": 1216245, "in": 4145304, "out": 5361549, "bal": 0}, "2026-08-13": {"prev": 0, "in": 1068715, "out": 0, "bal": 1068715}, "2026-08-14": {"prev": 1068715, "in": 1147817, "out": 2216532, "bal": 0}}}], "(주)필름": [{"bank": "하나", "acct": "569-910038-75804", "alias": "교보문고", "byDate": {"2026-08-01": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-02": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-03": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-04": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-05": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-06": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-07": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-08": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-09": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-10": {"prev": 0, "in": 2085075, "out": 2085075, "bal": 0}, "2026-08-11": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-12": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-13": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-14": {"prev": 0, "in": 0, "out": 0, "bal": 0}}}, {"bank": "하나", "acct": "779-910025-30104", "alias": "출금전용", "byDate": {"2026-08-01": {"prev": 2114319, "in": 0, "out": 0, "bal": 2114319}, "2026-08-02": {"prev": 2114319, "in": 0, "out": 0, "bal": 2114319}, "2026-08-03": {"prev": 2114319, "in": 5586000, "out": 6290824, "bal": 1409495}, "2026-08-04": {"prev": 1409495, "in": 8681562, "out": 8700000, "bal": 1391057}, "2026-08-05": {"prev": 1391057, "in": 25000000, "out": 24933768, "bal": 1457289}, "2026-08-06": {"prev": 1457289, "in": 0, "out": 700000, "bal": 757289}, "2026-08-07": {"prev": 757289, "in": 103360, "out": 0, "bal": 860649}, "2026-08-08": {"prev": 860649, "in": 0, "out": 0, "bal": 860649}, "2026-08-09": {"prev": 860649, "in": 0, "out": 0, "bal": 860649}, "2026-08-10": {"prev": 860649, "in": 51507940, "out": 52334805, "bal": 33784}, "2026-08-11": {"prev": 33784, "in": 4632412, "out": 4175000, "bal": 491196}, "2026-08-12": {"prev": 491196, "in": 20000000, "out": 20000000, "bal": 491196}, "2026-08-13": {"prev": 491196, "in": 0, "out": 0, "bal": 491196}, "2026-08-14": {"prev": 491196, "in": 167778284, "out": 167929067, "bal": 340413}}}, {"bank": "하나", "acct": "779-910025-29104", "alias": "입금전용", "byDate": {"2026-08-01": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-02": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-03": {"prev": 0, "in": 2485000, "out": 2086000, "bal": 399000}, "2026-08-04": {"prev": 399000, "in": 1782562, "out": 2181562, "bal": 0}, "2026-08-05": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-06": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-07": {"prev": 0, "in": 4412440, "out": 0, "bal": 4412440}, "2026-08-08": {"prev": 4412440, "in": 0, "out": 0, "bal": 4412440}, "2026-08-09": {"prev": 4412440, "in": 0, "out": 0, "bal": 4412440}, "2026-08-10": {"prev": 4412440, "in": 12120180, "out": 15507940, "bal": 1024680}, "2026-08-11": {"prev": 1024680, "in": 2107732, "out": 3132412, "bal": 0}, "2026-08-12": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-13": {"prev": 0, "in": 55256962, "out": 0, "bal": 55256962}, "2026-08-14": {"prev": 55256962, "in": 112521322, "out": 167778284, "bal": 0}}}, {"bank": "국민", "acct": "008601-04-184141", "alias": "국민카드", "byDate": {"2026-08-01": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-02": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-03": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-04": {"prev": 11440, "in": 5000000, "out": 5000000, "bal": 11440}, "2026-08-05": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-06": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-07": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-08": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-09": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-10": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-11": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-12": {"prev": 11440, "in": 7000000, "out": 7000000, "bal": 11440}, "2026-08-13": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}, "2026-08-14": {"prev": 11440, "in": 0, "out": 0, "bal": 11440}}}, {"bank": "신한", "acct": "100-037-991214", "alias": "창업진흥", "byDate": {"2026-08-01": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-02": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-03": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-04": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-05": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-06": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-07": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-08": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-09": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-10": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-11": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-12": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-13": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}, "2026-08-14": {"prev": 32400, "in": 0, "out": 0, "bal": 32400}}}], "공명 마곡": [{"bank": "하나", "acct": "569-910042-05104", "alias": "입금전용", "byDate": {"2026-08-01": {"prev": 35827, "in": 0, "out": 0, "bal": 35827}, "2026-08-02": {"prev": 35827, "in": 0, "out": 0, "bal": 35827}, "2026-08-03": {"prev": 35827, "in": 3497982, "out": 3510970, "bal": 22839}, "2026-08-04": {"prev": 22839, "in": 4455886, "out": 4449417, "bal": 29308}, "2026-08-05": {"prev": 29308, "in": 12347752, "out": 12306092, "bal": 70968}, "2026-08-06": {"prev": 70968, "in": 3447904, "out": 0, "bal": 3518872}, "2026-08-07": {"prev": 3518872, "in": 4422396, "out": 0, "bal": 7941268}, "2026-08-08": {"prev": 7941268, "in": 0, "out": 0, "bal": 7941268}, "2026-08-09": {"prev": 7941268, "in": 0, "out": 0, "bal": 7941268}, "2026-08-10": {"prev": 7941268, "in": 3391880, "out": 11285020, "bal": 48128}, "2026-08-11": {"prev": 48128, "in": 4424883, "out": 0, "bal": 4473011}, "2026-08-12": {"prev": 4473011, "in": 11955258, "out": 16357057, "bal": 71212}, "2026-08-13": {"prev": 71212, "in": 3180471, "out": 0, "bal": 3251683}, "2026-08-14": {"prev": 3251683, "in": 4145504, "out": 7397187, "bal": 0}}}, {"bank": "하나", "acct": "569-910042-06804", "alias": "출금전용", "byDate": {"2026-08-01": {"prev": 79366, "in": 0, "out": 0, "bal": 79366}, "2026-08-02": {"prev": 79366, "in": 0, "out": 0, "bal": 79366}, "2026-08-03": {"prev": 79366, "in": 4010970, "out": 4000000, "bal": 90336}, "2026-08-04": {"prev": 90336, "in": 4449417, "out": 4000000, "bal": 539753}, "2026-08-05": {"prev": 539753, "in": 12306092, "out": 10000000, "bal": 2845845}, "2026-08-06": {"prev": 2845845, "in": 0, "out": 0, "bal": 2845845}, "2026-08-07": {"prev": 2845845, "in": 0, "out": 0, "bal": 2845845}, "2026-08-08": {"prev": 2845845, "in": 0, "out": 0, "bal": 2845845}, "2026-08-09": {"prev": 2845845, "in": 0, "out": 0, "bal": 2845845}, "2026-08-10": {"prev": 2845845, "in": 11285020, "out": 13298366, "bal": 832499}, "2026-08-11": {"prev": 832499, "in": 0, "out": 0, "bal": 832499}, "2026-08-12": {"prev": 832499, "in": 16357057, "out": 11000000, "bal": 6189556}, "2026-08-13": {"prev": 6189556, "in": 0, "out": 0, "bal": 6189556}, "2026-08-14": {"prev": 6189556, "in": 12997187, "out": 18681959, "bal": 504784}}}], "필름(개인)": [{"bank": "하나", "acct": "831-910011-72104", "alias": "김상현", "byDate": {"2026-08-01": {"prev": 5547, "in": 0, "out": 0, "bal": 5547}, "2026-08-02": {"prev": 5547, "in": 0, "out": 0, "bal": 5547}, "2026-08-03": {"prev": 5547, "in": 0, "out": 0, "bal": 5547}, "2026-08-04": {"prev": 5547, "in": 2200000, "out": 2200000, "bal": 5547}, "2026-08-05": {"prev": 5547, "in": 20000000, "out": 19800000, "bal": 205547}, "2026-08-06": {"prev": 205547, "in": 0, "out": 0, "bal": 205547}, "2026-08-07": {"prev": 205547, "in": 0, "out": 0, "bal": 205547}, "2026-08-08": {"prev": 205547, "in": 0, "out": 0, "bal": 205547}, "2026-08-09": {"prev": 205547, "in": 0, "out": 0, "bal": 205547}, "2026-08-10": {"prev": 205547, "in": 17860993, "out": 17911570, "bal": 154970}, "2026-08-11": {"prev": 154970, "in": 0, "out": 0, "bal": 154970}, "2026-08-12": {"prev": 154970, "in": 0, "out": 0, "bal": 154970}, "2026-08-13": {"prev": 154970, "in": 0, "out": 0, "bal": 154970}, "2026-08-14": {"prev": 154970, "in": 0, "out": 0, "bal": 154970}}}, {"bank": "신한", "acct": "110-466-379255", "alias": "김기용", "byDate": {"2026-08-01": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-02": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-03": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-04": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-05": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-06": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-07": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-08": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-09": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-10": {"prev": 0, "in": 17864993, "out": 17864993, "bal": 0}, "2026-08-11": {"prev": 0, "in": 600000, "out": 560344, "bal": 39656}, "2026-08-12": {"prev": 39656, "in": 0, "out": 0, "bal": 39656}, "2026-08-13": {"prev": 39656, "in": 0, "out": 0, "bal": 39656}, "2026-08-14": {"prev": 39656, "in": 0, "out": 0, "bal": 39656}}}], "공명 연남": [{"bank": "하나", "acct": "831-910011-73804", "alias": "입금전용", "byDate": {"2026-08-01": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-02": {"prev": 0, "in": 0, "out": 0, "bal": 0}, "2026-08-03": {"prev": 0, "in": 2605719, "out": 2605719, "bal": 0}, "2026-08-04": {"prev": 0, "in": 6043346, "out": 6043346, "bal": 0}, "2026-08-05": {"prev": 0, "in": 6573547, "out": 6255566, "bal": 317981}, "2026-08-06": {"prev": 317981, "in": 2735634, "out": 0, "bal": 3053615}, "2026-08-07": {"prev": 3053615, "in": 7628997, "out": 0, "bal": 10682612}, "2026-08-08": {"prev": 10682612, "in": 0, "out": 0, "bal": 10682612}, "2026-08-09": {"prev": 10682612, "in": 0, "out": 0, "bal": 10682612}, "2026-08-10": {"prev": 10682612, "in": 1880059, "out": 12545223, "bal": 17448}, "2026-08-11": {"prev": 17448, "in": 4088543, "out": 4105991, "bal": 0}, "2026-08-12": {"prev": 0, "in": 5893073, "out": 5888073, "bal": 5000}, "2026-08-13": {"prev": 5000, "in": 2387500, "out": 0, "bal": 2392500}, "2026-08-14": {"prev": 2392500, "in": 4341884, "out": 6734384, "bal": 0}}}, {"bank": "하나", "acct": "831-910011-74404", "alias": "출금전용", "byDate": {"2026-08-01": {"prev": 192514, "in": 0, "out": 0, "bal": 192514}, "2026-08-02": {"prev": 192514, "in": 0, "out": 0, "bal": 192514}, "2026-08-03": {"prev": 192514, "in": 4905719, "out": 5000000, "bal": 98233}, "2026-08-04": {"prev": 98233, "in": 7543346, "out": 5000000, "bal": 2641579}, "2026-08-05": {"prev": 2641579, "in": 6255566, "out": 7756200, "bal": 1140945}, "2026-08-06": {"prev": 1140945, "in": 0, "out": 0, "bal": 1140945}, "2026-08-07": {"prev": 1140945, "in": 0, "out": 0, "bal": 1140945}, "2026-08-08": {"prev": 1140945, "in": 0, "out": 0, "bal": 1140945}, "2026-08-09": {"prev": 1140945, "in": 0, "out": 0, "bal": 1140945}, "2026-08-10": {"prev": 1140945, "in": 30545223, "out": 31291317, "bal": 394851}, "2026-08-11": {"prev": 394851, "in": 4105991, "out": 1500000, "bal": 3000842}, "2026-08-12": {"prev": 3000842, "in": 5888073, "out": 8001000, "bal": 887915}, "2026-08-13": {"prev": 887915, "in": 0, "out": 0, "bal": 887915}, "2026-08-14": {"prev": 887915, "in": 46734384, "out": 46686201, "bal": 936098}}}]};
+const companies = DATA.companies;
+const days = DATA.data;
+const dateKeys = Object.keys(days).sort();
+const forecastDates = dateKeys.filter(d => d >= '2026-08-01');
+const baseDate = '2026-07-31';
+
+const dowNames = ['일','월','화','수','목','금','토'];
+
+function fmt(n){
+  const sign = n < 0 ? '-' : '';
+  return sign + Math.abs(Math.round(n)).toLocaleString('ko-KR') + '원';
+}
+function fmtShort(n){
+  return (n<0?'-':'') + Math.abs(Math.round(n)).toLocaleString('ko-KR');
+}
+function dowLabel(dateStr){
+  const d = new Date(dateStr+'T00:00:00');
+  return dowNames[d.getDay()];
+}
+function mdLabel(dateStr){
+  const [y,m,d] = dateStr.split('-');
+  return `${parseInt(m)}/${parseInt(d)}`;
+}
+
+// base total
+document.getElementById('baseTotal').textContent = fmt(days[baseDate]['잔고'].total);
+
+// build tabs
+const tabsEl = document.getElementById('tabs');
+forecastDates.forEach((d,i) => {
+  const btn = document.createElement('div');
+  btn.className = 'tab' + (i===0 ? ' active' : '');
+  btn.innerHTML = `${mdLabel(d)}<span class="dow">(${dowLabel(d)})</span>`;
+  btn.dataset.date = d;
+  btn.addEventListener('click', () => selectDate(d));
+  tabsEl.appendChild(btn);
+});
+
+function prevBalance(dateStr){
+  const idx = dateKeys.indexOf(dateStr);
+  const prevKey = dateKeys[idx-1];
+  return prevKey ? days[prevKey]['잔고'] : days[baseDate]['잔고'];
+}
+
+let currentDate = null;
+
+function selectDate(d){
+  currentDate = d;
+  document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.date===d));
+
+  const rec = days[d];
+  const inTotal = rec['입금'].total;
+  const outTotal = rec['지출'].total;
+  const balTotal = rec['잔고'].total;
+  const netTotal = inTotal - outTotal;
+
+  document.getElementById('kpiBal').textContent = fmt(balTotal);
+  document.getElementById('kpiIn').textContent = fmt(inTotal);
+  document.getElementById('kpiOut').textContent = fmt(outTotal);
+  const netEl = document.getElementById('kpiNet');
+  netEl.textContent = (netTotal>=0?'+':'') + fmt(netTotal);
+  netEl.className = 'value ' + (netTotal>=0?'pos':'neg');
+
+  // company cards
+  const grid = document.getElementById('companyGrid');
+  grid.innerHTML = '';
+  const prevBal = prevBalance(d);
+  const cardMap = {};
+  companies.forEach((name, i) => {
+    const cin = rec['입금'].vals[i];
+    const cout = rec['지출'].vals[i];
+    const cbal = rec['잔고'].vals[i];
+    const cnet = cin - cout;
+    const maxFlow = Math.max(cin, cout, 1);
+    const inPct = (cin/maxFlow*100).toFixed(1);
+    const outPct = (cout/maxFlow*100).toFixed(1);
+    const badgeClass = cnet>0?'pos':(cnet<0?'neg':'flat');
+    const badgeText = cnet===0 ? '변동없음' : (cnet>0?'+':'') + fmtShort(cnet);
+
+    const card = document.createElement('div');
+    card.className = 'company-card';
+
+    const accts = ACCOUNT_BAL[name] || [];
+    const acctRows = accts.map(a => {
+      const bd = a.byDate[d] || {prev:0, in:0, out:0, bal:0};
+      return {alias:a.alias, bank:a.bank, acct:a.acct, prev:bd.prev, in:bd.in, out:bd.out, bal:bd.bal};
+    });
+
+    const acctHtml = acctRows.length
+      ? `<table class="acct-bal-table">
+           <thead><tr>
+             <th style="text-align:left;">계좌별칭</th>
+             <th style="text-align:left;">계좌번호</th>
+             <th style="text-align:right;">전일잔액</th>
+             <th style="text-align:right;">금일입금</th>
+             <th style="text-align:right;">금일출금</th>
+             <th style="text-align:right;">금일잔액</th>
+           </tr></thead>
+           <tbody>
+             ${acctRows.map(a => `
+               <tr>
+                 <td style="text-align:left;">${a.bank}은행(${a.alias})</td>
+                 <td style="text-align:left;" class="acct-bal-number">${a.acct}</td>
+                 <td class="${a.prev<0?'neg':''}">${a.prev ? fmtShort(a.prev) : '-'}</td>
+                 <td class="${a.in>0?'pos':''}">${a.in>0 ? fmtShort(a.in) : '-'}</td>
+                 <td class="${a.out>0?'neg':''}">${a.out>0 ? fmtShort(a.out) : '-'}</td>
+                 <td class="${a.bal<0?'neg':''}"><b>${a.bal ? fmtShort(a.bal) : '-'}</b></td>
+               </tr>`).join('')}
+           </tbody>
+         </table>`
+      : '<div class="acct-empty">연동된 계좌 정보 없음</div>';
+
+    card.innerHTML = `
+      <div class="cc-header">
+        <div class="cname">${name}</div>
+        <div class="cbal ${cbal<0?'neg':''}">${fmt(cbal)}</div>
+        <span class="badge ${badgeClass}">${badgeText}</span>
+      </div>
+      <div class="flow-row"><span>입금 <b class="v-in">${fmtShort(cin)}</b></span><span>지출 <b class="v-out">${fmtShort(cout)}</b></span></div>
+      <div class="flow-bar"><div class="seg-in" style="width:${inPct}%"></div><div class="seg-out" style="width:${outPct}%"></div></div>
+      <button type="button" class="acct-head acct-toggle-btn"><span class="acct-toggle-arrow">▾</span> 계좌별 상세내역</button>
+      <div class="acct-detail" style="display:block;">${acctHtml}</div>
+    `;
+
+    const toggleBtn = card.querySelector('.acct-toggle-btn');
+    toggleBtn.addEventListener('click', () => {
+      const detail = card.querySelector('.acct-detail');
+      const arrow = card.querySelector('.acct-toggle-arrow');
+      const open = detail.style.display !== 'none';
+      detail.style.display = open ? 'none' : 'block';
+      arrow.textContent = open ? '▸' : '▾';
+    });
+    cardMap[name] = card;
+  });
+
+  // (주)필름 and 필름(개인) share one row; the 5 공명 branches share another row
+  const pairRow = document.createElement('div');
+  pairRow.className = 'company-pair-row';
+  if (cardMap['(주)필름']) pairRow.appendChild(cardMap['(주)필름']);
+  if (cardMap['필름(개인)']) pairRow.appendChild(cardMap['필름(개인)']);
+  grid.appendChild(pairRow);
+
+  const gongmyeongNames = ['공명 연남', '공명 홍대', '공명 합정', '공명 망원', '공명 마곡'];
+  for (let i = 0; i < gongmyeongNames.length; i += 2) {
+    const row = document.createElement('div');
+    const pairNames = gongmyeongNames.slice(i, i + 2);
+    row.className = 'company-pair-row' + (pairNames.length === 1 ? ' company-pair-row-solo' : '');
+    pairNames.forEach(name => { if (cardMap[name]) row.appendChild(cardMap[name]); });
+    if (pairNames.length === 1) {
+      const spacer = document.createElement('div');
+      spacer.className = 'company-card company-card-empty';
+      row.appendChild(spacer);
+    }
+    grid.appendChild(row);
+  }
+
+  renderDetail();
+  renderPie(d);
+  renderBar(d);
+}
+
+// ---- transaction detail section ----
+function renderDetail(){
+  renderDetailSide('detailTableIn', 'detailEmptyIn', 'detailInSum', '입금', 'pos');
+  renderDetailSide('detailTableOut', 'detailEmptyOut', 'detailOutSum', '지출', 'neg');
+}
+
+function renderDetailSide(tableId, emptyId, sumId, type, amtClass){
+  const table = document.getElementById(tableId);
+  const emptyEl = document.getElementById(emptyId);
+  const sumEl = document.getElementById(sumId);
+
+  // group by company, preserving companies list order; skip companies with no txns
+  const groups = companies.map(name => {
+    const txns = (TXN[name] || [])
+      .filter(t => t.date === currentDate && t.type === type)
+      .sort((a,b) => b.amount - a.amount);
+    return {name, txns, sum: txns.reduce((s,t) => s + t.amount, 0)};
+  }).filter(g => g.txns.length > 0);
+
+  const grandTotal = groups.reduce((s,g) => s + g.sum, 0);
+  const grandCount = groups.reduce((s,g) => s + g.txns.length, 0);
+
+  sumEl.textContent = grandCount ? `${fmtShort(grandTotal)}원 (${grandCount}건)` : '';
+
+  if(groups.length === 0){
+    table.innerHTML = '';
+    table.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  table.style.display = '';
+  emptyEl.style.display = 'none';
+
+  const thead = `<thead><tr><th style="text-align:left;">계정</th><th style="text-align:left;">거래처</th><th style="text-align:left;">내용</th><th>금액</th><th style="text-align:left;">비고</th></tr></thead>`;
+
+  let body = '';
+  groups.forEach((g, gi) => {
+    body += `<tbody class="group-body" data-group="${gi}">`;
+    body += `<tr class="group-header-row"><td colspan="5"><span class="group-arrow">▸</span> ${g.name} <span class="group-header-sum">${fmtShort(g.sum)}원 · ${g.txns.length}건</span></td></tr>`;
+    g.txns.forEach(t => {
+      body += '<tr>';
+      body += `<td style="text-align:left;">${t.cat || '-'}</td>`;
+      body += `<td style="text-align:left;">${t.vendor || '-'}</td>`;
+      body += `<td style="text-align:left;">${t.note || '-'}</td>`;
+      body += `<td class="${amtClass}">${fmtShort(t.amount)}</td>`;
+      body += `<td style="text-align:left;color:var(--sub);font-size:11px;">${t.memo || ''}</td>`;
+      body += '</tr>';
+    });
+    body += '</tbody>';
+  });
+  body += `<tbody><tr class="row-total"><td colspan="3" style="text-align:left;">총합계</td><td class="${amtClass}">${fmtShort(grandTotal)}</td><td></td></tr></tbody>`;
+
+  table.innerHTML = thead + body;
+
+  table.querySelectorAll('.group-header-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const tbodyEl = row.closest('.group-body');
+      const expanded = tbodyEl.classList.toggle('expanded');
+      row.querySelector('.group-arrow').textContent = expanded ? '▾' : '▸';
+    });
+  });
+}
+
+// cost-type breakdown pie chart (전체 사업장 합산, 지출만)
+const pieColors = ['#b9902f','#6b6862','#a8a296','#8f897f','#c2bcae','#8a6a1f'];
+
+function renderPie(d){
+
+  const totals = {};
+  companies.forEach(name => {
+    (TXN[name] || []).filter(t => t.date === d && t.type === '지출').forEach(t => {
+      const key = t.costtype || '기타';
+      totals[key] = (totals[key] || 0) + t.amount;
+    });
+  });
+
+  const entries = Object.entries(totals).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  const grand = entries.reduce((s,[,v]) => s+v, 0);
+
+  const svg = document.getElementById('pieChart');
+  const legend = document.getElementById('pieLegend');
+  const centerVal = document.getElementById('pieCenterValue');
+
+  if(entries.length === 0 || grand === 0){
+    svg.innerHTML = `<circle cx="95" cy="95" r="76" fill="none" stroke="#f0ece0" stroke-width="26"/>`;
+    legend.innerHTML = '<div class="pie-empty">해당 일자에 지출 내역이 없습니다.</div>';
+    centerVal.textContent = '0원';
+    return;
+  }
+
+  centerVal.textContent = fmt(grand);
+
+  const cx=95, cy=95, r=76;
+  const circumference = 2 * Math.PI * r;
+  let offsetAcc = 0;
+  let svgParts = '';
+  entries.forEach(([name,val], i) => {
+    const frac = val / grand;
+    const dash = frac * circumference;
+    const gap = circumference - dash;
+    const rotation = (offsetAcc / grand) * 360 - 90;
+    svgParts += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${pieColors[i%pieColors.length]}" stroke-width="26" stroke-dasharray="${dash} ${gap}" transform="rotate(${rotation} ${cx} ${cy})"/>`;
+    offsetAcc += val;
+  });
+  svg.innerHTML = svgParts;
+
+  legend.innerHTML = entries.map(([name,val], i) => {
+    const pct = (val/grand*100).toFixed(1);
+    const barPct = (val/entries[0][1]*100).toFixed(1);
+    return `<div class="pie-legend-row">
+      <span class="pie-legend-swatch" style="background:${pieColors[i%pieColors.length]}"></span>
+      <span class="pie-legend-name">${name}</span>
+      <span class="pie-legend-bar"><span class="pie-legend-bar-fill" style="width:${barPct}%;background:${pieColors[i%pieColors.length]}"></span></span>
+      <span class="pie-legend-val">${fmtShort(val)}원 · ${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// 실행구분별 지출 bar chart (해당 일자 기준 — 그날의 최대 항목에 맞춰 막대 길이 조절)
+function renderBar(d){
+
+  const totals = {};
+  companies.forEach(name => {
+    (TXN[name] || []).filter(t => t.date === d && t.type === '지출').forEach(t => {
+      const key = t.cat || '기타';
+      totals[key] = (totals[key] || 0) + t.amount;
+    });
+  });
+
+  const entries = Object.entries(totals).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  const list = document.getElementById('barList');
+
+  if(entries.length === 0){
+    list.innerHTML = '<div class="bar-empty">해당 일자에 지출 내역이 없습니다.</div>';
+    return;
+  }
+
+  const max = entries[0][1];
+  const grand = entries.reduce((s,[,v]) => s+v, 0);
+  list.innerHTML = entries.map(([name,val]) => {
+    const pct = (val/max*100).toFixed(1);
+    const sharePct = (val/grand*100).toFixed(1);
+    return `<div class="bar-row">
+      <span class="bar-name" title="${name}">${name}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${pct}%"></span></span>
+      <span class="bar-val">${fmtShort(val)}원 · ${sharePct}%</span>
+    </div>`;
+  }).join('');
+}
+
+selectDate(forecastDates[forecastDates.length - 1]);
+</script>
+</body>
+</html>

@@ -209,11 +209,37 @@
   .detail-col-head.in{color:var(--green);}
   .detail-col-head.out{color:var(--red);}
   .detail-col-head span:last-child{font-family:'Space Grotesk',sans-serif;font-size:13px;}
-  .detail-col table{font-size:12px;}
-  .detail-col th:first-child,.detail-col td:first-child{position:static;}
-  .detail-col table th:nth-child(1),.detail-col table td:nth-child(1){width:26%;}
-  .detail-col table th:nth-child(2),.detail-col table td:nth-child(2){width:54%;}
-  .detail-col table th:nth-child(3),.detail-col table td:nth-child(3){width:20%;}
+  .acc-colhead{
+    display:grid;grid-template-columns:26% 1fr 20%;gap:6px;
+    font-size:11px;color:var(--sub);font-weight:600;padding:6px 10px;
+  }
+  .acc-group{border-radius:10px;overflow:hidden;margin-bottom:4px;}
+  .acc-group-row{
+    display:grid;grid-template-columns:26% 1fr 20%;gap:6px;align-items:center;
+    padding:10px 10px;background:#f6f4ec;cursor:pointer;transition:background .15s ease;
+    border-radius:9px;
+  }
+  .acc-group-row:hover{background:#f1eddf;}
+  .acc-group-row .agr-name{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;}
+  .acc-group-row .agr-arrow{display:inline-block;font-size:10px;color:var(--sub);transition:transform .15s ease;}
+  .acc-group-row.open .agr-arrow{transform:rotate(90deg);}
+  .acc-group-row .agr-meta{font-size:11.5px;color:var(--sub);}
+  .acc-group-row .agr-amt{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;}
+  .acc-group-row.in .agr-amt{color:var(--green);}
+  .acc-group-row.out .agr-amt{color:var(--red);}
+  .acc-total-row{background:transparent;font-weight:700;border-top:2px solid var(--ink);border-radius:0;cursor:default;padding:10px 10px 4px;}
+  .acc-total-row .agr-amt{color:var(--ink);}
+  .acc-items{max-height:0;overflow:hidden;transition:max-height .2s ease;}
+  .acc-items.open{max-height:2000px;}
+  .acc-item-row{
+    display:grid;grid-template-columns:26% 1fr 20%;gap:6px;align-items:center;
+    padding:9px 10px 9px 26px;font-size:12.5px;border-bottom:1px solid var(--border);
+  }
+  .acc-item-row .ai-vendor{color:var(--ink);font-weight:500;}
+  .acc-item-row .ai-desc{color:var(--sub);overflow-wrap:anywhere;}
+  .acc-item-row .ai-amt{text-align:right;font-family:'Space Grotesk',sans-serif;font-weight:600;}
+  .acc-item-row.in .ai-amt{color:var(--green);}
+  .acc-item-row.out .ai-amt{color:var(--red);}
   @media (max-width:760px){
     .detail-split{flex-direction:column;}
   }
@@ -284,9 +310,9 @@
     .acct-toggle-btn{padding:11px 0;font-size:11.5px;}
     .acct-toggle-arrow{font-size:10px;}
     .detail-col{padding:12px 12px 14px;}
-    .detail-col table th:nth-child(1),.detail-col table td:nth-child(1){width:26%;}
-    .detail-col table th:nth-child(2),.detail-col table td:nth-child(2){width:48%;}
-    .detail-col table th:nth-child(3),.detail-col table td:nth-child(3){width:26%;}
+    .acc-colhead,.acc-group-row,.acc-item-row{grid-template-columns:26% 1fr 26%;font-size:11.5px;}
+    .acc-item-row{padding:8px 6px 8px 16px;}
+    .acc-group-row{padding:9px 6px;}
     table{font-size:11px;}
     th,td{padding:7px 6px;}
     .tabs{gap:4px;}
@@ -348,12 +374,12 @@
   <div class="detail-split">
     <div class="table-card detail-col">
       <div class="detail-col-head in"><span>입금</span><span id="detailInSum"></span></div>
-      <table id="detailTableIn"></table>
+      <div id="detailTableIn"></div>
       <div id="detailEmptyIn" style="display:none;padding:20px 4px;text-align:center;color:var(--sub);font-size:13px;">입금 내역 없음</div>
     </div>
     <div class="table-card detail-col">
       <div class="detail-col-head out"><span>지출</span><span id="detailOutSum"></span></div>
-      <table id="detailTableOut"></table>
+      <div id="detailTableOut"></div>
       <div id="detailEmptyOut" style="display:none;padding:20px 4px;text-align:center;color:var(--sub);font-size:13px;">지출 내역 없음</div>
     </div>
   </div>
@@ -533,10 +559,12 @@ function renderDetail(){
   renderDetailSide('detailTableOut', 'detailEmptyOut', 'detailOutSum', '지출', 'neg');
 }
 
-function renderDetailSide(tableId, emptyId, sumId, type, amtClass){
-  const table = document.getElementById(tableId);
+function renderDetailSide(containerId, emptyId, sumId, type, amtClass){
+  const container = document.getElementById(containerId);
   const emptyEl = document.getElementById(emptyId);
   const sumEl = document.getElementById(sumId);
+  const sideClass = amtClass === 'pos' ? 'in' : 'out';
+  const sign = amtClass === 'pos' ? '+' : '-';
 
   // group by company, preserving companies list order; skip companies with no txns
   const groups = companies.map(name => {
@@ -552,38 +580,49 @@ function renderDetailSide(tableId, emptyId, sumId, type, amtClass){
   sumEl.textContent = grandCount ? `${fmtShort(grandTotal)}원 (${grandCount}건)` : '';
 
   if(groups.length === 0){
-    table.innerHTML = '';
-    table.style.display = 'none';
+    container.innerHTML = '';
+    container.style.display = 'none';
     emptyEl.style.display = 'block';
     return;
   }
-  table.style.display = '';
+  container.style.display = '';
   emptyEl.style.display = 'none';
 
-  const thead = `<thead><tr><th style="text-align:left;">거래처</th><th style="text-align:left;">내용</th><th style="text-align:right;">금액</th></tr></thead>`;
+  let html = `<div class="acc-colhead"><div>거래처</div><div>내용</div><div style="text-align:right;">금액</div></div>`;
 
-  let body = '';
   groups.forEach((g, gi) => {
-    body += `<tbody class="group-body" data-group="${gi}">`;
-    body += `<tr class="group-header-row"><td colspan="3"><span class="group-arrow">▸</span> ${g.name} <span class="group-header-sum">${fmtShort(g.sum)}원 · ${g.txns.length}건</span></td></tr>`;
-    g.txns.forEach(t => {
-      body += '<tr>';
-      body += `<td style="text-align:left;">${t.vendor || '-'}</td>`;
-      body += `<td style="text-align:left;">${t.note || '-'}</td>`;
-      body += `<td class="${amtClass}" style="text-align:right;">${fmtShort(t.amount)}</td>`;
-      body += '</tr>';
-    });
-    body += '</tbody>';
+    const key = `${type}-${gi}`;
+    const itemsHtml = g.txns.map(t => `
+      <div class="acc-item-row ${sideClass}">
+        <div class="ai-vendor">${t.vendor || '-'}</div>
+        <div class="ai-desc">${t.note || '-'}</div>
+        <div class="ai-amt">${sign}${fmtShort(t.amount)}</div>
+      </div>`).join('');
+    html += `
+      <div class="acc-group">
+        <div class="acc-group-row ${sideClass}" data-key="${key}">
+          <div class="agr-name"><span class="agr-arrow">▸</span>${g.name}</div>
+          <div class="agr-meta">${fmtShort(g.sum)}원 · ${g.txns.length}건</div>
+          <div class="agr-amt">${fmtShort(g.sum)}</div>
+        </div>
+        <div class="acc-items" data-items="${key}">${itemsHtml}</div>
+      </div>`;
   });
-  body += `<tbody><tr class="row-total"><td colspan="2" style="text-align:left;">총합계</td><td class="${amtClass}" style="text-align:right;">${fmtShort(grandTotal)}</td></tr></tbody>`;
 
-  table.innerHTML = thead + body;
+  html += `
+    <div class="acc-group-row acc-total-row">
+      <div>총합계</div><div></div>
+      <div class="agr-amt">${fmtShort(grandTotal)}</div>
+    </div>`;
 
-  table.querySelectorAll('.group-header-row').forEach(row => {
+  container.innerHTML = html;
+
+  container.querySelectorAll('.acc-group-row[data-key]').forEach(row => {
     row.addEventListener('click', () => {
-      const tbodyEl = row.closest('.group-body');
-      const expanded = tbodyEl.classList.toggle('expanded');
-      row.querySelector('.group-arrow').textContent = expanded ? '▾' : '▸';
+      const key = row.dataset.key;
+      const itemsEl = container.querySelector(`.acc-items[data-items="${key}"]`);
+      const isOpen = row.classList.toggle('open');
+      itemsEl.classList.toggle('open', isOpen);
     });
   });
 }
